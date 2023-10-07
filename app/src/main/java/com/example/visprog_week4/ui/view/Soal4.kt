@@ -79,12 +79,28 @@ fun ExplorePageView(pictureList: List<Picture>) {
                 items(pictureList) {
                     PictureCard(picture = it)
                 }
+                item (span = { GridItemSpan(3)}) {
+                    invisibleBox()
+                }
             }
         },
         bottomBar = {
             instagramNavBar()
         }
     )
+}
+
+@Composable
+fun invisibleBox() {
+    // don't judge me
+    Column (
+        modifier = Modifier
+            .height(50.dp)
+    ) {
+        Text(
+            text = ""
+        )
+    }
 }
 
 @OptIn(ExperimentalMaterial3Api::class)

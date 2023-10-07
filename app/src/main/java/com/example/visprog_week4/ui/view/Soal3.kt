@@ -105,23 +105,27 @@ fun InstagramView(storyList: List<Story>, suggestionList: List<Suggestion>, feed
                     instagramStoryRow(storyList)
                 }
                 item {
-                    Spacer(modifier = Modifier.height(20.dp))
+                    Spacer(modifier = Modifier.height(10.dp))
                 }
-                var feedCardCount = 1 // Counter for FeedCard items
+                var feedCardCount = 5
                 for (feed in feedList) {
-                    if (feedCardCount % 6 == 0 || feedCardCount == 2) {
+                    if (feedCardCount % 6 == 0) {
                         item {
                             instagramSuggestionRow(suggestionList)
                         }
                         item {
                             FeedCard(feed = feed)
                         }
+                        feedCardCount = 0
                     } else {
                         item {
                             FeedCard(feed = feed)
                         }
                     }
                     feedCardCount++
+                }
+                item {
+                    invisibleBox()
                 }
             }
         },
@@ -245,7 +249,7 @@ fun instagramTopBar() {
     }
 
     val onDmLogoClick: () -> Unit = {
-        val text = "Dm"
+        val text = "DM"
         val duration = Toast.LENGTH_SHORT
 
         val toast = Toast.makeText(context, text, duration)
@@ -318,8 +322,16 @@ fun FeedCard(feed: Feed) {
 
     val context = LocalContext.current
 
-    val onLikeLogoClick: () -> Unit = {
-        val text = "Like Button"
+    val onClick: () -> Unit = {
+        val text = "${feed.name} Story"
+        val duration = Toast.LENGTH_SHORT
+
+        val toast = Toast.makeText(context, text, duration)
+        toast.show()
+    }
+
+    val onMoreLogoClick: () -> Unit = {
+        val text = "More Button"
         val duration = Toast.LENGTH_SHORT
 
         val toast = Toast.makeText(context, text, duration)
@@ -342,14 +354,6 @@ fun FeedCard(feed: Feed) {
         toast.show()
     }
 
-    val onSaveLogoClick: () -> Unit = {
-        val text = "Save Button"
-        val duration = Toast.LENGTH_SHORT
-
-        val toast = Toast.makeText(context, text, duration)
-        toast.show()
-    }
-
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -362,16 +366,31 @@ fun FeedCard(feed: Feed) {
                 .padding(horizontal = 15.dp, vertical = 10.dp)
         ) {
             Row (verticalAlignment = Alignment.CenterVertically) {
-                Image(
-                    painter = painterResource(id = feed.profilePicture),
-                    contentDescription = "Profile Picture",
+                Box(
+                    contentAlignment = Alignment.Center,
                     modifier = Modifier
-                        .size(30.dp)
-                        .aspectRatio(1f)
-                        .clip(CircleShape),
-                    contentScale = ContentScale.Crop
-                )
-                Spacer(modifier = Modifier.width(20.dp))
+                        .clickable { onClick() }
+                ) {
+                    Image(
+                        painter = painterResource(id = feed.profilePicture),
+                        contentDescription = "Profile Picture",
+                        modifier = Modifier
+                            .size(35.dp)
+                            .aspectRatio(1f)
+                            .clip(CircleShape),
+                        contentScale = ContentScale.Crop
+                    )
+                    Image(
+                        painter = painterResource(R.drawable.story),
+                        contentDescription = "Story Border",
+                        modifier = Modifier
+                            .size(42.dp)
+                    )
+                }
+                // everyone has the story circle logo cuz in the dummy data everyone posted story (otherwise i'd add a simple if else)
+                // am i allowed to change the dummy data idk
+
+                Spacer(modifier = Modifier.width(15.dp))
                 Text (
                     text = "${feed.name}",
                     fontFamily = onest,
@@ -385,6 +404,7 @@ fun FeedCard(feed: Feed) {
                 contentDescription = "More Button",
                 modifier = Modifier
                     .size(25.dp)
+                    .clickable { onMoreLogoClick() }
             )
         }
         Image(
@@ -404,21 +424,7 @@ fun FeedCard(feed: Feed) {
             Row (
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                @DrawableRes val likeButton: Int
-
-                if (feed.isLike) {
-                    likeButton = R.drawable.liked
-                } else {
-                    likeButton = R.drawable.like
-                }
-
-                Image (
-                    painter = painterResource(id = likeButton),
-                    contentDescription = "Like Button",
-                    modifier = Modifier
-                        .size(25.dp)
-                        .clickable { onLikeLogoClick() }
-                )
+                DisposableLikeButton(feed = feed)
                 Spacer(modifier = Modifier.width(15.dp))
                 Image (
                     painter = painterResource(id = R.drawable.comment),
@@ -436,22 +442,7 @@ fun FeedCard(feed: Feed) {
                         .clickable { onShareLogoClick() }
                 )
             }
-
-            @DrawableRes val shareButton: Int
-
-            if (feed.isSaves) {
-                shareButton = R.drawable.saved_light
-            } else {
-                shareButton = R.drawable.save
-            }
-
-            Image (
-                painter = painterResource(id = shareButton),
-                contentDescription = "Save Button",
-                modifier = Modifier
-                    .size(25.dp)
-                    .clickable { onSaveLogoClick() }
-            )
+            DisposableSaveButton(feed = feed)
         }
         val likeLabel: String
 
@@ -475,6 +466,92 @@ fun FeedCard(feed: Feed) {
     }
 }
 
+@Composable
+fun DisposableSaveButton(feed: Feed) {
+    @DrawableRes val saveButton: Int
+    val context = LocalContext.current
+    var saved by remember { mutableStateOf(feed.isSaves) }
+    var text by remember { mutableStateOf("Unsaved") }
+
+    if (saved) {
+        saveButton = R.drawable.saved_light
+    } else {
+        saveButton = R.drawable.save
+    }
+
+    val onSaveLogoClick: () -> Unit = {
+
+        saved = !saved
+
+        if (saved) {
+            text = "Saved"
+        } else {
+            text = "Unsaved"
+        }
+
+        val duration = Toast.LENGTH_SHORT
+
+        val toast = Toast.makeText(context, text, duration)
+        toast.show()
+    }
+
+    DisposableEffect(Unit) {
+        onDispose {
+            Toast.makeText(context, "", Toast.LENGTH_SHORT).cancel()
+        }
+    }
+
+    Image(
+        painter = painterResource(id = saveButton),
+        contentDescription = "Save Button",
+        modifier = Modifier
+            .size(25.dp)
+            .clickable { onSaveLogoClick() }
+    )
+}
+@Composable
+fun DisposableLikeButton(feed: Feed) {
+    @DrawableRes val likeButton: Int
+    val context = LocalContext.current
+    var liked by remember { mutableStateOf(feed.isLike) }
+    var text by remember {mutableStateOf("Unliked")}
+
+    if (liked) {
+        likeButton = R.drawable.liked
+    } else {
+        likeButton = R.drawable.like
+    }
+
+    val onLikeLogoClick: () -> Unit = {
+
+        liked = !liked
+
+        if (liked) {
+            text = "Liked"
+        } else {
+            text = "Unliked"
+        }
+
+        val duration = Toast.LENGTH_SHORT
+
+        val toast = Toast.makeText(context, text, duration)
+        toast.show()
+    }
+
+    DisposableEffect(Unit) {
+        onDispose {
+            Toast.makeText(context, "", Toast.LENGTH_SHORT).cancel()
+        }
+    }
+
+    Image(
+        painter = painterResource(id = likeButton),
+        contentDescription = "Like Button",
+        modifier = Modifier
+            .size(25.dp)
+            .clickable { onLikeLogoClick() }
+    )
+}
 @Composable
 fun showDate(feed: Feed) {
     val normalDate = SimpleDateFormat("yyyy-MM-dd")
@@ -660,9 +737,17 @@ fun DisposableFollowButton(
 fun StoryCard(story: Story) {
 
     val context = LocalContext.current
+    var text by remember { mutableStateOf("") }
 
     val onClick: () -> Unit = {
-        val text = "${story.name} story"
+        val name = "${story.name}"
+
+        if (name == "Your Story") {
+            text = "Your Story"
+        } else {
+            text = "$name Story"
+        }
+
         val duration = Toast.LENGTH_SHORT
 
         val toast = Toast.makeText(context, text, duration)
