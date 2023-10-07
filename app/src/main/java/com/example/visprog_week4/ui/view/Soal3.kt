@@ -79,6 +79,10 @@ val onest = FontFamily (
     Font(R.font.onest_black, FontWeight.Black)
 )
 
+// pls notice what i did
+// like-unlike, save-unsave, follow-following-followback, tbh that's it but i added some toast here and there
+// ps. i added some values to the dummy data
+
 @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -399,13 +403,59 @@ fun FeedCard(feed: Feed) {
                     fontSize = 14.sp
                 )
             }
-            Image (
-                painter = painterResource(id = R.drawable.morebutton),
-                contentDescription = "More Button",
-                modifier = Modifier
-                    .size(25.dp)
-                    .clickable { onMoreLogoClick() }
-            )
+
+            var isFollowingFeed by remember { mutableStateOf(feed.isFollowing) }
+
+            if (!isFollowingFeed) {
+                var suggestionButtonText by remember { mutableStateOf("Follow") }
+                var suggestionButtonColor by remember { mutableStateOf(Color(0xFF262626)) }
+                // i didn't make it blue because instagram made it grey
+                var isFollowing by remember { mutableStateOf(false) }
+                var suggestionButtonPressed by remember { mutableStateOf(false) }
+
+                LaunchedEffect(suggestionButtonPressed) {
+                    if (suggestionButtonPressed) {
+                        isFollowing = !isFollowing
+                        suggestionButtonPressed = false
+                    }
+                }
+
+                if (isFollowing) {
+                    suggestionButtonText = "Following"
+                } else {
+                    if (feed.isFollowers) {
+                        suggestionButtonText = "Follow Back"
+                    } else {
+                        suggestionButtonText = "Follow"
+                    }
+                }
+
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    DisposableFollowButton(
+                        text = suggestionButtonText,
+                        color = suggestionButtonColor,
+                        onClick = {
+                            suggestionButtonPressed = true
+                        }
+                    )
+                    Spacer(modifier = Modifier.width(10.dp))
+                    Image(
+                        painter = painterResource(id = R.drawable.morebutton),
+                        contentDescription = "More Button",
+                        modifier = Modifier
+                            .size(25.dp)
+                            .clickable { onMoreLogoClick() }
+                    )
+                }
+            } else {
+                Image(
+                    painter = painterResource(id = R.drawable.morebutton),
+                    contentDescription = "More Button",
+                    modifier = Modifier
+                        .size(25.dp)
+                        .clickable { onMoreLogoClick() }
+                )
+            }
         }
         Image(
             painter = painterResource(id = feed.feedContent),

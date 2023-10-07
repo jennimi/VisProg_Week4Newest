@@ -27,7 +27,9 @@ class Instagram {
         val isSaves: Boolean,
         val like: Int,
         val caption: String,
-        val date: String
+        val date: String,
+        val isFollowing : Boolean,
+        val isFollowers: Boolean
     )
 
     data class Suggestion(
