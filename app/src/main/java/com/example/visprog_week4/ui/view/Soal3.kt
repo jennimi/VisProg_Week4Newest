@@ -81,6 +81,7 @@ val onest = FontFamily (
 
 // pls notice what i did
 // like-unlike, save-unsave, follow-following-followback, tbh that's it but i added some toast here and there
+// just realized that because i didn't change the variable in the model it doesn't save my actions :( i thought it would reset only after i stopped running but if you scroll away and go back it just resets :(
 // ps. i added some values to the dummy data
 
 @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
@@ -358,6 +359,8 @@ fun FeedCard(feed: Feed) {
         toast.show()
     }
 
+    var liked by remember { mutableStateOf(feed.isLike) }
+
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -474,7 +477,46 @@ fun FeedCard(feed: Feed) {
             Row (
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                DisposableLikeButton(feed = feed)
+                @DrawableRes val likeButton: Int
+                val context = LocalContext.current
+                var text by remember {mutableStateOf("Unliked")}
+
+                if (liked) {
+                    likeButton = R.drawable.liked
+                } else {
+                    likeButton = R.drawable.like
+                }
+
+                val onLikeLogoClick: () -> Unit = {
+
+                    liked = !liked
+
+                    if (liked) {
+                        text = "Liked"
+                    } else {
+                        text = "Unliked"
+                    }
+
+                    val duration = Toast.LENGTH_SHORT
+
+                    val toast = Toast.makeText(context, text, duration)
+                    toast.show()
+                }
+
+                DisposableEffect(Unit) {
+                    onDispose {
+                        Toast.makeText(context, "", Toast.LENGTH_SHORT).cancel()
+                    }
+                }
+
+                Image(
+                    painter = painterResource(id = likeButton),
+                    contentDescription = "Like Button",
+                    modifier = Modifier
+                        .size(25.dp)
+                        .clickable { onLikeLogoClick() }
+                )
+
                 Spacer(modifier = Modifier.width(15.dp))
                 Image (
                     painter = painterResource(id = R.drawable.comment),
@@ -502,14 +544,26 @@ fun FeedCard(feed: Feed) {
             likeLabel = "likes"
         }
 
+        var likeCount = feed.like
+        var finLikeCount = feed.like
+
+        if (feed.isLike && !liked) {
+            finLikeCount = likeCount - 1
+        } else if (!feed.isLike && liked) {
+            finLikeCount = likeCount + 1
+        } else {
+            finLikeCount = likeCount
+        }
+
         Text (
-            text = "${feed.like} $likeLabel",
+            text = "$finLikeCount $likeLabel",
             color = Color.White,
             fontFamily = onest,
             modifier = Modifier
                 .padding(start = 15.dp),
             fontSize = 13.sp
         )
+
         ExpandableCaption(feed = feed)
         showDate(feed = feed)
         Spacer(modifier = Modifier.height(10.dp))
